@@ -1,18 +1,29 @@
-import sys
+#!/usr/bin/env python3
+
+"""
+Parse a specified SH_NOTE section from an ELF and print it.
+
+See also `llvm-readelf -n`.
+"""
+
 import struct
+import sys
 
 # get data from the elf. hold on tight.
 from elftools.elf.elffile import ELFFile
 
 
 def parse_notes_section(binary):
+    """Parse binary data for a notes section"""
     # unpack header
-    namesz, descsz, type = struct.unpack("<III", binary[:12])
+    namesz, descsz, type_id = struct.unpack("<III", binary[:12])
 
     binary = binary[12:]
 
+    print(f"---\n{'type'}: {type_id}")
+
     for field, value in {"namesz": namesz, "descsz": descsz}.items():
-        print("---\n{}: {}".format(field, value))
+        print(f"---\n{field}: {value}")
         if value > 0:
             data = binary[:value]
             print(repr(data))
@@ -27,24 +38,12 @@ def parse_notes_section(binary):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: %s <elf> <section name>" % sys.argv[0])
+        print(f"Usage: {sys.argv[0]} <elf> <section name>")
         sys.exit(1)
 
-    with open(sys.argv[1], 'rb') as elffile:
+    with open(sys.argv[1], "rb") as elffile:
         elf = ELFFile(elffile)
         for section in elf.iter_sections():
             if section.name == sys.argv[2]:
                 print(section.name)
                 parse_notes_section(section.data())
-    # output = struct.pack(
-    #     "<III",
-    #     len("GIT_SHA") + 1,
-    #     len("97a30d5e086697cd335e22af6703fabbd3020ae7") + 1,
-    #     0x10,  # random type
-    # )
-
-    # rem = (len("GIT_SHA") + 1) % 4
-    # append = b"\0" * (4 - rem) if rem else b""
-    # output += b"GIT_SHA\0" + append
-
-    # sys.stdout.buffer.write(output)

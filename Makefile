@@ -4,10 +4,13 @@ BUILDDIR = build
 
 .SILENT:
 
+.PHONY: parse_note
+parse_note: $(BUILDDIR)/main
+	python elf_note_parse.py $^ .note.gitsha
+
 $(BUILDDIR)/main: $(BUILDDIR)/main.o $(BUILDDIR)/shanote.o
 	mkdir -p $(dir $@)
 	clang $(CFLAGS) $^ -lcurl -o $@
-	python elf-note-parse.py $@ .note.gitsha
 
 $(BUILDDIR)/%.o: %.c
 	mkdir -p $(dir $@)
@@ -29,4 +32,3 @@ $(BUILDDIR)/shanote.o: $(BUILDDIR)/shanote
 		--binary-architecture i386:x86-64 \
 		--rename-section .data=.note.gitsha \
 		$^ $@
-
